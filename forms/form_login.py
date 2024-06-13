@@ -2,9 +2,7 @@ from tkinter import *
 from tkinter import ttk, messagebox
 from tkinter.font import BOLD
 import utils.generic as utils
-from hotel.client import instantiateClient
-# from hotel.user import instantiateUser
-# from hotel.entry_clients import instantiateEntryClient
+from forms.choose_instance import instantiateChooseInstance
 
 font = ('Times', 14)
 
@@ -15,7 +13,7 @@ class App:
         password = self.password.get()
         if user == 'root' and password == 'root':
             self.window.destroy()
-            instantiateClient()
+            instantiateChooseInstance()
         else:
             messagebox.showerror(message='Usuario o contraseña incorrectos', title='Error')
     
