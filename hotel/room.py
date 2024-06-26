@@ -4,13 +4,16 @@ from tkinter import *
 from utils.generic import center_window
 import pymysql
 
+font = ('Comic Sans MS', 14)
+mainColor = "#f59e0b"
 class Room:
     
-    def __init__(self, window):
+    def __init__(self, window, role, close):
       self.wind = window
+      self.role = role
       self.wind.title("Habitaciones")
-      
-      center_window(self.wind, 800, 500)
+      self.close = close
+      center_window(self.wind, 1200, 600)
       
       # Conection to the database
       self.conn = pymysql.connect(
@@ -23,38 +26,47 @@ class Room:
       self.create_table()
       
       # Creating a Frame Container
-      frame = LabelFrame(self.wind, text='Nueva Habitacion')
+      frame = LabelFrame(self.wind, padx=20, pady=20)
+      if self.role != 3:
+        frame = LabelFrame(self.wind, text='Nueva Habitacion', font=font, padx=20, pady=20)
+      else:
+        frame = LabelFrame(self.wind, text='Habitaciones', font=font, padx=20, pady=20)
       frame.grid(row=0, column=0, columnspan=3, pady=20)
-      
+      if self.role != 3:
       # Room Number Input
-      Label(frame, text='Numero: ').grid(row=1, column=0)
-      self.room_number = Entry(frame)
-      self.room_number.focus()
-      self.room_number.grid(row=1, column=1)
-      
-      # Type of room ("Family", "individual", "couple") Input
-      Label(frame, text='Tipo de habitacion: ').grid(row=2, column=0)
-      self.room_type = ttk.Combobox(frame, values=["Familiar", "Individual", "Pareja"], state='readonly')
-      self.room_type.grid(row=2, column=1)
-      self.room_type.set("Pareja")
-      
-      # Button Add Product
-      ttk.Button(frame, text="Guardar Habitacion", command=self.add_room).grid(row=3, columnspan=2, sticky=W + E)
+        Label(frame, text='Numero: ', font=font).grid(row=1, column=0)
+        self.room_number = Entry(frame)
+        self.room_number.focus()
+        self.room_number.grid(row=1, column=1)
+        
+        # Type of room ("Family", "individual", "couple") Input
+        Label(frame, text='Tipo de habitacion: ', font=font).grid(row=2, column=0)
+        self.room_type = ttk.Combobox(frame, values=["Familiar", "Individual", "Pareja"], state='readonly')
+        self.room_type.grid(row=2, column=1)
+        self.room_type.set("Pareja")
+        
+        # Button Add Product
+        Button(frame, text="Guardar Habitacion", font=font, command=self.add_room).grid(row=3, columnspan=2, sticky=W + E)
       
       # Output Messages
-      self.message = Label(text='', fg='red')
+      self.message = Label(self.wind, text='', fg='red')
       self.message.grid(row=3, column=0, columnspan=2, sticky=W+E)
       
       # Table
-      self.tree = ttk.Treeview(height=10, columns=('ID','Numero', 'Tipo'))
+      style = ttk.Style()
+      style.configure("Treeview.Heading", font=font)  # Fuente para encabezados
+      style.configure("Treeview", font=('Comic Sans MS', 10)) 
+      self.tree = ttk.Treeview(frame, height=10, columns=('ID','Numero', 'Tipo'))
       self.tree.grid(row=4, column=0, columnspan=2)
       self.tree.heading("#0", text='ID', anchor=CENTER)
       self.tree.heading("#1", text='Numero', anchor=CENTER)
       self.tree.heading('#2', text='Tipo', anchor=CENTER)
       
       # Action buttons (EDIT, DELETE)
-      ttk.Button(text='DELETE', command=self.delete_room).grid(row=5, column=0, sticky=W+E)
-      ttk.Button(text='EDIT', command=self.edit_room).grid(row=5, column=1, sticky=W+E)
+      if self.role == 1:  
+        Button(self.wind, text='Eliminar', font=font, command=self.delete_room).grid(row=5, column=0, sticky=W+E)
+      if self.role < 3:
+        Button(self.wind, text='Editar', font=font, command=self.edit_room).grid(row=5, column=1, sticky=W+E)
       
       # Filling the rows
       self.get_rooms()
@@ -122,8 +134,10 @@ class Room:
             self.run_query(query, parameters)
             self.format_form()
             self.message['text'] = 'Habitacion {} Creada Correctamente.'.format(self.room_number.get())
-        else:
-            self.message['text'] = 'Todos los campos son requeridos.'
+            if self.close == True:
+                self.wind.destroy()
+            else:
+                self.message['text'] = 'Todos los campos son requeridos.'
             
         self.get_rooms()
         
@@ -137,7 +151,7 @@ class Room:
         self.message['text'] = ''
         number = self.tree.item(self.tree.selection())['values'][0]
         query = 'DELETE FROM rooms WHERE room_number = %s'
-        
+        print(number, "HERE",  self.tree.item(self.tree.selection()))
         self.run_query(query, (number))
         
         self.message['text'] = 'Habitacion {} eliminada correctamente'.format(number)
@@ -163,7 +177,7 @@ class Room:
 
         # New room_number
         Label(self.edit_wind, text='Nuevo Numero de habitacion: ').grid(row=1, column=1)
-        new_room_number = Entry(self.edit_wind)
+        new_room_number = Entry(self.edit_wind, textvariable = StringVar(self.edit_wind, value=number))
         new_room_number.grid(row=1, column=2)
         
         # Old room_type
@@ -187,9 +201,14 @@ class Room:
         self.message['text'] = 'Habitacion {} actualizada correctamente'.format(number)
         self.get_rooms()
         
-def instantiateRoom():
-    window = Tk()
-    Room(window)
-    window.mainloop()
+def instantiateRoom(role, wind = False):
+    if(wind):
+        window = wind
+        Room(window, role, close=True)
+        window.mainloop()
+    else:
+        window = Tk()
+        Room(window, role, close=False)
+        window.mainloop()
     
         

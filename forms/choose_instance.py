@@ -5,58 +5,61 @@ from hotel.client import instantiateClient
 from hotel.user import instantiateUser
 from hotel.room import instantiateRoom
 from hotel.entry_clients import instantiateEntryClient
+from tkinter import messagebox
+
+font = ('Comic Sans MS', 15)
 
 class ChooseInstance():
     
     def choose_intance(self, instance):
         if instance == 'users':
-            self.window.destroy()
-            instantiateUser()
+            instantiateUser(role=self.role)
         elif instance == 'clients':
-            instantiateClient()
+            instantiateClient(role=self.role)
         elif instance == 'rooms':
-            instantiateRoom()
+            instantiateRoom(role=self.role)
         else:
-            instantiateEntryClient()
+            instantiateEntryClient(role=self.role)
 
-    def __init__(self, window):
+    def __init__(self, window, role):
         self.window = window
+        self.role = role
         self.window.title("Inicio")
         self.window.geometry("800x500")
-        self.window.config(bg="#fcfcfc")
+        self.window.config(bg="#fff")
         self.window.resizable(width=0, height=0)
         
         utils.center_window(self.window, 800, 500)
-        
-        logo = utils.read_image("./images/Hermes.jpg", (200, 200))
-        
-        # Frame Logo
-        frame_logo = Frame(self.window, bd=0, width=300, relief=SOLID, padx=10, pady=10, bg='#3a7ff6')
-        frame_logo.pack(side='left', expand=NO, fill=BOTH)
-        
-        label = Label(frame_logo, image=logo, bg='#3a7ff6')
-        label.place(x=0,y=0,relwidth=1, relheight=1)
-        
+                
         # Frame Form
         frame_form = Frame(self.window, bd=0, relief=SOLID)
-        frame_form.pack(side='right', expand=YES, fill=BOTH)
+        frame_form.grid(row=0, column=0, rowspan=4, sticky=N+S+E+W)
         
         # Button
-        usersButton = Button(frame_form, text='Usuarios', bg='gray', font=('Times', 15, BOLD), bd=0, command=lambda: self.choose_intance('users'))
-        usersButton.pack(fill=X, padx=20, pady=20)
+        usersButton = Button(frame_form, text='Usuarios', bg='#f59e0b', font=font, bd=0, command=lambda: self.choose_intance('users'))
+        usersButton.grid(row=0, column=0, sticky=W+E, padx=20, pady=10)
         
-        clientsButton = Button(frame_form, text='Clientes', bg='gray', font=('Times', 15, BOLD), bd=0, command=lambda: self.choose_intance('clients'))
-        clientsButton.pack(fill=X, padx=20, pady=20)
+        clientsButton = Button(frame_form, text='Clientes', bg='#f59e0b', font=font, bd=0, command=lambda: self.choose_intance('clients'))
+        clientsButton.grid(row=1, column=0, sticky=W+E, padx=20, pady=10)
         
-        roomsButton = Button(frame_form, text='Habitaciones', bg='gray', font=('Times', 15, BOLD), bd=0, command=lambda: self.choose_intance('clients'))
-        roomsButton.pack(fill=X, padx=20, pady=20)
+        roomsButton = Button(frame_form, text='Habitaciones', bg='#f59e0b', font=font, bd=0, command=lambda: self.choose_intance('rooms'))
+        roomsButton.grid(row=2, column=0, sticky=W+E, padx=20, pady=10)
         
-        # Entry clients
-        entryClientsButton = Button(frame_form, text='Ingresar entrada a hotel', bg='gray', font=('Times', 15, BOLD), bd=0, command=lambda: self.choose_intance('hotel'))
-        entryClientsButton.pack(fill=X, padx=20, pady=20)
+        if role < 3:
+            entryClientsButton = Button(frame_form, text='Ingresar entrada a hotel', bg='#f59e0b', font=font, bd=0, command=lambda: self.choose_intance('hotel'))
+            entryClientsButton.grid(row=3, column=0, sticky=W+E, padx=20, pady=10)
         
-        
-def instantiateChooseInstance():
+        # Configurar pesos para permitir expansión
+        self.window.grid_rowconfigure(0, weight=1)
+        self.window.grid_columnconfigure(0, weight=1)
+        # self.window.grid_columnconfigure(1, weight=1)
+        frame_form.grid_rowconfigure(0, weight=1)
+        frame_form.grid_rowconfigure(1, weight=1)
+        frame_form.grid_rowconfigure(2, weight=1)
+        frame_form.grid_rowconfigure(3, weight=1)
+        frame_form.grid_columnconfigure(0, weight=1)
+
+def instantiateChooseInstance(role):
     window = Tk()
-    ChooseInstance(window)
+    ChooseInstance(window, role)
     window.mainloop()

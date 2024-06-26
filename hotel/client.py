@@ -5,14 +5,18 @@ from utils.generic import center_window
 import pymysql
 from tkcalendar import DateEntry
 
+
+font = ('Comic Sans MS', 14)
+mainColor = "#f59e0b"
 class Client():
     
-    def __init__(self, window, close):
+    def __init__(self, window, role, close):
       self.wind = window
+      self.role = role
       self.wind.title("Clientes")
       self.close = close
       
-      center_window(self.wind, 800, 500)
+      center_window(self.wind, 1200, 600)
       
       # Conection to the database
       self.conn = pymysql.connect(
@@ -23,51 +27,64 @@ class Client():
       )
       self.cur = self.conn.cursor()
       self.create_table()
-      
+
       # Creating a Frame Container
-      frame = LabelFrame(self.wind, text='Nuevo Cliente')
+      frame = LabelFrame(self.wind, padx=20, pady=20)
+      if self.role != 3:
+        frame = LabelFrame(self.wind, text='Nuevo Cliente', font=font, padx=20, pady=20)
+      else:
+        frame = LabelFrame(self.wind, text='Clientes', padx=20, pady=20)
       frame.grid(row=0, column=0, columnspan=3, pady=20)
-      
+      if self.role != 3:
       # Name Input
-      Label(frame, text='Nombre: ').grid(row=1, column=0)
-      self.name = Entry(frame)
-      self.name.focus()
-      self.name.grid(row=1, column=1)
-      
-      # LastName Input
-      Label(frame, text='Apellido: ').grid(row=2, column=0)
-      self.last_name = Entry(frame)
-      self.last_name.grid(row=2, column=1)
-      
-      # DNO Input
-      Label(frame, text='Cedula: ').grid(row=3, column=0)
-      self.dni = Entry(frame)
-      self.dni.grid(row=3, column=1)
-      
-      # Fecha de nacimiento Input
-      Label(frame, text='Fecha de nacimiento: ').grid(row=4, column=0)
-      self.birth_date = DateEntry(frame, width=12, background='darkblue',
-                                    foreground='white', borderwidth=2, year=2000)
-      self.birth_date.grid(row=4, column=1)
-      
-      # Button Add Product
-      ttk.Button(frame, text="Guardar cliente", command=self.add_client).grid(row=5, columnspan=2, sticky=W + E)
+        Label(frame, text='Nombre: ', font=font).grid(row=1, column=0)
+        self.name = Entry(frame)
+        self.name.focus()
+        self.name.grid(row=1, column=1)
+        
+        # LastName Input
+        Label(frame, text='Apellido: ', font=font).grid(row=2, column=0)
+        self.last_name = Entry(frame)
+        self.last_name.grid(row=2, column=1)
+        
+        # DNO Input
+        Label(frame, text='Cedula: ', font=font).grid(row=3, column=0)
+        self.dni = Entry(frame)
+        self.dni.grid(row=3, column=1)
+        
+        # Fecha de nacimiento Input
+        Label(frame, text='Fecha de nacimiento: ', font=font).grid(row=4, column=0)
+        self.birth_date = DateEntry(frame, width=12, background='darkblue',
+                                        foreground='white', borderwidth=2, year=2000)
+        self.birth_date.grid(row=4, column=1)
+        
+        # Button Add Product
+        Button(frame, text="Guardar cliente", font=("Comic Sans MS", 10), command=self.add_client).grid(row=5, columnspan=2, sticky=W + E)
       
       # Output Messages
-      self.message = Label(text='', fg='red')
-      self.message.grid(row=3, column=0, columnspan=2, sticky=W+E)
+      self.message = Label(self.wind, text='', fg='red')
+      self.message.grid(row=6, column=0, columnspan=2, sticky=W+E)
       
       # Table
-      self.tree = ttk.Treeview(height=10, columns=('Nombre', 'Apellido', 'Cedula', 'Fecha de nacimiento'))
-      self.tree.grid(row=4, column=0, columnspan=2)
-      self.tree.heading("#0", text='Nombre', anchor=CENTER)
-      self.tree.heading('#1', text='Apellido', anchor=CENTER)
-      self.tree.heading('#2', text='Cedula', anchor=CENTER)
-      self.tree.heading('#3', text='Fecha de Nacimiento', anchor=CENTER)
+      style = ttk.Style()
+      style.configure("Treeview.Heading", font=font)  # Fuente para encabezados
+      style.configure("Treeview", font=('Comic Sans MS', 10)) 
+      
+      self.tree = ttk.Treeview(frame, height=10, columns=('Nombre', 'Apellido', 'Cedula', 'Fecha de nacimiento'))
+      if role != 3:       
+        self.tree.grid(row=7, column=0, columnspan=2)
+      else:
+        self.tree.grid(row=7, column=0, columnspan=2)
+      self.tree.heading("#0", text='Nombre', anchor='w')
+      self.tree.heading('#1', text='Apellido', anchor='w')
+      self.tree.heading('#2', text='Cedula', anchor='w')
+      self.tree.heading('#3', text='Fecha de Nacimiento', anchor='w')
       
       # Action buttons (EDIT, DELETE)
-      ttk.Button(text='DELETE', command=self.delete_client).grid(row=5, column=0, sticky=W+E)
-      ttk.Button(text='EDIT', command=self.edit_client).grid(row=5, column=1, sticky=W+E)
+      if self.role == 1:
+        Button(self.wind, text='DELETE', font=("Comic Sans MS", 10),  command=self.delete_client).grid(row=5, column=0, sticky=W+E)
+      if self.role < 3:
+        Button(self.wind, text='EDIT', font=("Comic Sans MS", 10),  command=self.edit_client).grid(row=5, column=1, sticky=W+E)
       
       # Filling the rows
       self.get_clients()
@@ -85,7 +102,6 @@ class Client():
             """)
             self.conn.commit()
         except pymysql.Error as e:
-            print(e, "ERROR HERE")
             self.message['text'] = f"Error al crear la tabla: {e}"
 
     def run_query(self, query, parameters=()):
@@ -158,7 +174,6 @@ class Client():
             self.message['text'] = 'Please select a record'
             return
         self.message['text'] = ''
-        print(self.tree.item(self.tree.selection()), "SELECTION")
         name = self.tree.item(self.tree.selection())['text']
         old_last_name = self.tree.item(self.tree.selection())['values'][0]
         old_dni = self.tree.item(self.tree.selection())['values'][1]
@@ -173,7 +188,7 @@ class Client():
 
         # New Name
         Label(self.edit_wind, text='Nuevo nombre: ').grid(row=1, column=1)
-        new_name = Entry(self.edit_wind)
+        new_name = Entry(self.edit_wind, textvariable = StringVar(self.edit_wind, value=name))
         new_name.grid(row=1, column=2)
         
         # Old Last Name
@@ -182,7 +197,7 @@ class Client():
         
         # New LAst Name
         Label(self.edit_wind, text='Nuevo apellido: ').grid(row=3, column=1)
-        new_last_name = Entry(self.edit_wind)
+        new_last_name = Entry(self.edit_wind, textvariable = StringVar(self.edit_wind, value=old_last_name))
         new_last_name.grid(row=3, column=2)
         
         # Old DNI
@@ -191,7 +206,7 @@ class Client():
         
         # New DNI
         Label(self.edit_wind, text='Nueva Cedula: ').grid(row=5, column=1)
-        new_dni = Entry(self.edit_wind)
+        new_dni = Entry(self.edit_wind, textvariable = StringVar(self.edit_wind, value=old_dni))
         new_dni.grid(row=5, column=2)
         
         # # Old Birth date
@@ -209,21 +224,20 @@ class Client():
         
     def edit_record(self, new_name, new_last_name, new_dni, new_birth_date, dni):
         query = 'UPDATE clients SET name = %s, last_name = %s, dni = %s, birth_date = %s WHERE dni = %s'
-        print(new_name, new_last_name, new_dni, new_birth_date.get_date(),dni)
         parameters = (new_name, new_last_name, new_dni, new_birth_date.get_date(),dni)
         self.run_query(query, parameters)
         self.edit_wind.destroy()
         self.message['text'] = 'Cliente {} actualizado correctamente'.format(dni)
         self.get_clients()
         
-def instantiateClient(wind):
+def instantiateClient(role, wind = False):
     if wind:
         window = wind
-        Client(window, close=True)
+        Client(window, role, close=True)
         window.mainloop()
     else:
         window = Tk()
-        Client(window, close=False)
+        Client(window, role, close=False)
         window.mainloop()
         
     
